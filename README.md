@@ -5,13 +5,13 @@
 In the lab installation I am using following machines with their respective IP addresses.
 ```
 
-| Hostname | IP address     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `service.example.com`      | `192.168.1.170` | `Bastion/helper Node` |
-| `bootstrap.example.com`      | `192.168.1.171` | `Bootstrap Node` |
-| `worker1.example.com`      | `192.168.1.172` | `Master Node` |
-| `worker2.example.com`      | `192.168.1.173` | `Master Node` |
-| `worker3.example.com`      | `192.168.1.174` | `Master Node` |
+| Hostname | IP address     | Description                       | Hardware Requirement | 
+| :-------- | :------- | :-------------------------------- | :------------------- |
+| `service.example.com`      | `192.168.1.170` | `Bastion/helper Node` | 16 GB RAM  - 60GB HDD - 4 CPU |
+| `bootstrap.example.com`      | `192.168.1.171` | `Bootstrap Node` | 16 GB RAM  - 60GB HDD - 4 CPU |
+| `worker1.example.com`      | `192.168.1.172` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
+| `worker2.example.com`      | `192.168.1.173` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
+| `worker3.example.com`      | `192.168.1.174` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
 
 
 
@@ -322,3 +322,58 @@ Configure Apache
 # sed -i 's/Listen 80/Listen 8080/g' /etc/httpd/conf/httpd.conf
 # systemctl enable httpd --now
 ```
+
+**Installing Bootstrap node**
+
+Power on the bootstrap machine with CoreOS ISO. Once machine is powered on, do the `network` setup.
+
+![Configure Network](images/bootstrap-network.png)
+
+After network setup, activate the connection and try to ping service.example.com to verify that network is properly configured and DNS is working.
+
+```bash
+$ ping service.example.com
+```
+
+
+Apply the ignition from ignition-url
+
+```bash
+$ sudo coreos-installer install /dev/sda --ingition-url http://192.168.1.170:8080/ocp4/bootstrap.ign --insecure-ignition --copy-network
+```
+
+Peform same on the `master` nodes as well, however the ignition url will be different for the master nodes.
+
+First do the network configuration on `master1`, activate the network. Then run following command to apply the ignition.
+
+```bash
+$ sudo coreos-installer install /dev/sda --ingition-url http://192.168.1.170:8080/ocp4/master.ign --insecure-ignition --copy-network
+```
+
+Follow same procedure for `master{2-3}` nodes
+ 
+Once procedure is applied on all nodes then reboot the machines one by one starting with bootstrap node.
+
+```bash
+$ sudo reboot
+```
+Now the actual installation has started you can monitor the installation by SSHing into the bootstrap from the bastion host Or by opening `HA-Proxy` stats link in a browser
+
+```bash
+$ ssh core@bootstrap
+```
+
+http://192.168.1.170:9000/stats
+
+
+## Official OCP Documentation Links
+
+[Install OCP UPI](https://docs.openshift.com/container-platform/4.15/installing/installing_bare_metal/installing-bare-metal.html)
+
+## 🛠 Skills
+Openshift, Linux
+
+
+## Authors
+
+- [@kaybee-singh](https://www.github.com/kaybee-singh)
