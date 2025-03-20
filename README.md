@@ -115,6 +115,16 @@ $TTL 1D
 174     IN      PTR     master3.lab.example.com.
 
 ```
+Change the groupownership of zone files to named.
+```bash
+chgrp named /var/named/forward
+chgrp named /var/named/reverse
+```
+Start the named service
+```bash
+systemctl stop firewalld
+systemctl start named
+```
 Add following in the /etc/haproxy/haproxy.cfg file
 
 ```bash
