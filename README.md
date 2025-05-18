@@ -9,40 +9,39 @@ In the lab installation I am using following machines with their respective IP a
 | :-------- | :------- | :-------------------------------- | :------------------- |
 | `service.example.com`      | `192.168.1.170` | `Bastion/helper Node` | 16 GB RAM  - 60GB HDD - 4 CPU |
 | `bootstrap.example.com`      | `192.168.1.171` | `Bootstrap Node` | 16 GB RAM  - 60GB HDD - 4 CPU |
-| `worker1.example.com`      | `192.168.1.172` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
-| `worker2.example.com`      | `192.168.1.173` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
-| `worker3.example.com`      | `192.168.1.174` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
+| `master1.example.com`      | `192.168.1.172` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
+| `master2.example.com`      | `192.168.1.173` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
+| `master3.example.com`      | `192.168.1.174` | `Master Node` |16 GB RAM  - 60GB HDD - 4 CPU |
 
 
 
 First configure the Bastion Node with **Httpd**, **DNS** and **Haproxy** services.
 
 ```bash
-# yum install -y httpd bind bind-utils haproxy
+yum install -y httpd bind bind-utils haproxy
 ```
 
 
 Configure DNS on Bastion Node
 
 ```bash
-# cat /etc/named.conf
-# ip=`ip addr show | grep -oE 'inet ([0-9]*\.){3}[0-9]*' | awk '$2 !~ /^127\./ {print $2}'`
-# sed -i "s/listen-on port 53 { 127.0.0.1; };/listen-on port 53 { $ip; };/g" /etc/named.conf
-# ip_with_suffix=` ip addr show | grep -v '127.0.0.1' | awk '/inet / {split($2, a, "/"); split(a[1], b, "."); print b[1]"."b[2]"."b[3]".0/"a[2]}'`
-# sed -i "s/allow-query     { localhost; };/allow-query     { ${ip_with_suffix//\//\\/}; };/g" /etc/named.conf
-
+cat /etc/named.conf
+ip=`ip addr show | grep -oE 'inet ([0-9]*\.){3}[0-9]*' | awk '$2 !~ /^127\./ {print $2}'`
+sed -i "s/listen-on port 53 { 127.0.0.1; };/listen-on port 53 { $ip; };/g" /etc/named.conf
+ip_with_suffix=` ip addr show | grep -v '127.0.0.1' | awk '/inet / {split($2, a, "/"); split(a[1], b, "."); print b[1]"."b[2]"."b[3]".0/"a[2]}'`
+sed -i "s/allow-query     { localhost; };/allow-query     { ${ip_with_suffix//\//\\/}; };/g" /etc/named.conf
 ```
 
 Add Zone file reference in /etc/named.conf
 
 ```bash
-# vim /etc/named.conf
-
+vim /etc/named.conf
+```
+```bash
 zone "example.com" IN {
         type master;
         file "forward";
 };
-
 
 zone "1.168.192.in-addr.arpa" IN {
         type master;
@@ -55,8 +54,12 @@ zone "1.168.192.in-addr.arpa" IN {
 Now create the zone files
 
 ```bash
-# cp /var/named/named.localhost /var/named/forward
-# vim /var/named/forward
+cp /var/named/named.localhost /var/named/forward
+```
+```bash
+vim /var/named/forward
+```
+```bash
 $TTL 1D
 @       IN SOA  root.example.com service.example.com. (
                                         0       ; serial
@@ -79,17 +82,17 @@ bootstrap.lab.example.com.      IN      A       192.168.1.171
 master1.lab.example.com.        IN      A       192.168.1.172
 master2.lab.example.com.        IN      A       192.168.1.173
 master3.lab.example.com.        IN      A       192.168.1.174
-
-
-
 ```
 
 Now modify the reverse file
 
 ```bash
-# cp /var/named/forward /var/named/reverse
-
-# vim /var/named/reverse
+cp /var/named/forward /var/named/reverse
+```
+```bash
+vim /var/named/reverse
+```
+```bash
 $TTL 1D
 @       IN SOA  root.example.com service.example.com. (
                                         0       ; serial
@@ -128,8 +131,9 @@ systemctl start named
 Add following in the /etc/haproxy/haproxy.cfg file
 
 ```bash
-# vim /etc/haproxy/haproxy.cfg
-
+vim /etc/haproxy/haproxy.cfg
+```
+```bash
 # Global settings
 #---------------------------------------------------------------------
 global
@@ -229,63 +233,65 @@ backend ocp_https_ingress_backend
 Enable the SELinux boolean for Haproxy
 
  ```bash
- # setsebool -P haproxy_connect_any on
+setsebool -P haproxy_connect_any on
 ```
 
 Start the Haproxy service
 
  ```bash
-#  systemctl enable haproxy --now
+systemctl enable haproxy --now
 ```
 
 Stop and disable the firewalld
 
  ```bash
-# systemctl stop firewalld
-# systemctl disable firewalld
+systemctl stop firewalld
+systemctl disable firewalld
 ```
 
 Download and save the pull secret in a file
 
  ```bash
-#  vim pull-secret.txt
+vim pull-secret.txt
 ```
 
 Download the openshift-client-linux
 
  ```bash
-# wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-client-linux.tar.gz
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-client-linux.tar.gz
 
 ```
 Download the openshift-install-linux
 
  ```bash
-# wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-install-linux-4.14.20.tar.gz
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-install-linux-4.14.20.tar.gz
 ```
 
 Extract Both tar files
 
  ```bash
-#  tar -xvf openshift-client-linux.tar.gz -C /usr/bin
-#  tar -xvf openshift-install-linux-4.14.20.tar.gz -C /usr/bin -C /usr/bin
+tar -xvf openshift-client-linux.tar.gz -C /usr/bin
+tar -xvf openshift-install-linux-4.14.20.tar.gz -C /usr/bin -C /usr/bin
 ```
 Check the version of installed commands
  ```bash
-# oc version
-# kubectl version
-# openshift-install version
+oc version
+kubectl version
+openshift-install version
 ```
 Create keygen for user, this keygen will be used in ignition to access the nodes.
 
  ```bash
-# ssh-keygen
+ssh-keygen
 ```
 Create an install-config.yml file like below. Replace the basedomain, pullsecret and ssh key
 
 
  ```bash
-# mkdir ocp4
-# vim install-config.yml
+mkdir ocp4
+vim install-config.yml
+```
+```bash
 apiVersion: v1
 baseDomain: example.com
 compute:
@@ -315,22 +321,22 @@ sshKey: "ssh-ed25519 AAAA..."
 Create manifests
 
  ```bash
-# openshift-install create manifests --dir=/root/ocp4
+openshift-install create manifests --dir=/root/ocp4
 ```
 
 Create Ignition files
 
  ```bash
-# openshift-install create ignition-configs --dir=/root/ocp4
+openshift-install create ignition-configs --dir=/root/ocp4
 ```
 Configure Apache
 
  ```bash
-# mkdir /var/www/html/ocp4
-# cp /root/ocp4/*.ign /var/www/html/ocp4
-# restorecon -RFv /var/www/html/
-# sed -i 's/Listen 80/Listen 8080/g' /etc/httpd/conf/httpd.conf
-# systemctl enable httpd --now
+mkdir /var/www/html/ocp4
+cp /root/ocp4/*.ign /var/www/html/ocp4
+restorecon -RFv /var/www/html/
+sed -i 's/Listen 80/Listen 8080/g' /etc/httpd/conf/httpd.conf
+systemctl enable httpd --now
 ```
 
 **Installing Bootstrap node**
@@ -342,14 +348,14 @@ Power on the bootstrap machine with CoreOS ISO. Once machine is powered on, do t
 After network setup, activate the connection and try to ping service.example.com to verify that network is properly configured and DNS is working.
 
 ```bash
-$ ping service.example.com
+ping service.example.com
 ```
 
 
 Apply the ignition from ignition-url
 
 ```bash
-$ sudo coreos-installer install /dev/sda --ingition-url http://192.168.1.170:8080/ocp4/bootstrap.ign --insecure-ignition --copy-network
+sudo coreos-installer install /dev/sda --ingition-url http://192.168.1.170:8080/ocp4/bootstrap.ign --insecure-ignition --copy-network
 ```
 
 Peform same on the `master` nodes as well, however the ignition url will be different for the master nodes.
@@ -357,7 +363,7 @@ Peform same on the `master` nodes as well, however the ignition url will be diff
 First do the network configuration on `master1`, activate the network. Then run following command to apply the ignition.
 
 ```bash
-$ sudo coreos-installer install /dev/sda --ingition-url http://192.168.1.170:8080/ocp4/master.ign --insecure-ignition --copy-network
+sudo coreos-installer install /dev/sda --ingition-url http://192.168.1.170:8080/ocp4/master.ign --insecure-ignition --copy-network
 ```
 
 Follow same procedure for `master{2-3}` nodes
@@ -365,12 +371,12 @@ Follow same procedure for `master{2-3}` nodes
 Once procedure is applied on all nodes then reboot the machines one by one starting with bootstrap node.
 
 ```bash
-$ sudo reboot
+sudo reboot
 ```
 Now the actual installation has started you can monitor the installation by SSHing into the bootstrap from the bastion host Or by opening `HA-Proxy` stats link in a browser
 
 ```bash
-$ ssh core@bootstrap
+ssh core@bootstrap
 ```
 
 http://192.168.1.170:9000/stats
