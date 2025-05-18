@@ -258,13 +258,13 @@ vim pull-secret.txt
 Download the openshift-client-linux
 
  ```bash
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-client-linux.tar.gz
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.17.30/openshift-client-linux-4.17.30.tar.gz
 
 ```
 Download the openshift-install-linux
 
  ```bash
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.14/openshift-install-linux-4.14.20.tar.gz
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.17.30/openshift-install-linux-4.17.30.tar.gz
 ```
 
 Extract Both tar files
