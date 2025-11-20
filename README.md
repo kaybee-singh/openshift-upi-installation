@@ -258,20 +258,20 @@ vim pull-secret.txt
 Download the openshift-client-linux
 
  ```bash
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.17.30/openshift-client-linux-4.17.30.tar.gz
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.18.9/openshift-client-linux.tar.gz
 
 ```
 Download the openshift-install-linux
 
  ```bash
-wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.17.30/openshift-install-linux-4.17.30.tar.gz
+wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.18.9/openshift-install-linux.tar.gz
 ```
 
 Extract Both tar files
 
  ```bash
 tar -xvf openshift-client-linux.tar.gz -C /usr/bin
-tar -xvf openshift-install-linux-4.14.20.tar.gz -C /usr/bin -C /usr/bin
+tar -xvf openshift-install-linux.tar.gz -C /usr/bin
 ```
 Check the version of installed commands
  ```bash
@@ -288,8 +288,8 @@ Create an install-config.yml file like below. Replace the basedomain, pullsecret
 
 
  ```bash
-mkdir ocp4
-vim install-config.yml
+mkdir ocp4;cd ocp4
+vim install-config.yaml
 ```
 ```bash
 apiVersion: v1
@@ -308,7 +308,7 @@ networking:
   clusterNetwork:
     - cidr: 10.128.0.0/14
       hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   serviceNetwork:
     - 172.30.0.0/16
 platform:
@@ -335,6 +335,7 @@ Configure Apache
 mkdir /var/www/html/ocp4
 cp /root/ocp4/*.ign /var/www/html/ocp4
 restorecon -RFv /var/www/html/
+chgrp -R apache /var/www/html/ocp4
 sed -i 's/Listen 80/Listen 8080/g' /etc/httpd/conf/httpd.conf
 systemctl enable httpd --now
 ```
